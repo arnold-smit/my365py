@@ -41,9 +41,9 @@ def outlook() -> None:
     pass
 
 outlook.add_command(m365_outlook.send_email)
-outlook.add_command(m365_outlook.reply_email)
-outlook.add_command(m365_outlook.forward_email)
 outlook.add_command(m365_outlook.search_emails)
+outlook.add_command(m365_outlook.reply_emails)
+outlook.add_command(m365_outlook.forward_emails)
 outlook.add_command(m365_outlook.save_emails)
 outlook.add_command(m365_outlook.search_attachments)
 outlook.add_command(m365_outlook.save_attachments)

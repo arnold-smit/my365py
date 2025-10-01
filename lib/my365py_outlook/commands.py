@@ -7,8 +7,8 @@ from loguru import logger
 @click.option("--to", prompt="To addresses", help="Comma separated string of recipient email addresses.")
 @click.option("--subject", prompt="Subject", help="The subject of the email.")
 @click.option("--body", prompt="Body", help="The body of the email.")
-@click.option("--cc", prompt="CC addresses", help="Comma separated string of CC email addresses.", optional=True, default=None)
-@click.option("--attachment", prompt="Attachment paths", help="Comma separated string of attachment file paths.", optional=True, default=None)
+@click.option("--cc", prompt="CC addresses", help="Comma separated string of CC email addresses.", default=None)
+@click.option("--attachment", prompt="Attachment paths", help="Comma separated string of attachment file paths.", default=None)
 def send_email(to: str, subject: str, body: str, cc: str = None, attachment: str = None) -> list[dict]:
     """
     Sends an email.
@@ -21,17 +21,36 @@ def send_email(to: str, subject: str, body: str, cc: str = None, attachment: str
         The subject of the email.
     body : str
         The body of the email.
-    cc : str, optional
+    cc : str
         Comma separated string of CC email addresses.
-    bcc : str, optional
+    bcc : str
         Comma separated string of BCC email addresses.
-    attachments : str, optional
+    attachments : str
         Comma separated string of attachment file paths.
 
     Returns
     -------
     list[dict]
         A one item list where the item is the dict representing the email item.
+    """
+    return []
+
+
+@click.command()
+@click.option("--query", prompt="Query String", help="The query string used to search emails.")
+def search_emails(query: str) -> list[dict]:
+    """
+    Searches for emails matching the query.
+
+    Parameters
+    ----------
+    query : str
+        The search query.
+
+    Returns
+    -------
+    list[dict]
+        A list of emails matching the query.
     """
     return []
 
@@ -81,25 +100,6 @@ def forward_emails(emails: list[dict], to: str) -> list[dict]:
 
 
 @click.command()
-@click.option("--query", prompt="Query String", help="The query string used to search emails.")
-def search_emails(query: str) -> list[dict]:
-    """
-    Searches for emails matching the query.
-
-    Parameters
-    ----------
-    query : str
-        The search query.
-
-    Returns
-    -------
-    list[dict]
-        A list of emails matching the query.
-    """
-    return []
-
-
-@click.command()
 @click.option("--emails", prompt="List of emails", help="list of emails.")
 def save_emails(emails: list[dict]) -> list[dict]:
     """
@@ -120,7 +120,7 @@ def save_emails(emails: list[dict]) -> list[dict]:
 
 @click.command()
 @click.option("--query", prompt="Query String", help="The query string used to search attachments.")
-def search_attachment(query: str) -> list[dict]:
+def search_attachments(query: str) -> list[dict]:
     """
     Searches for attachments matching the query.
 
@@ -140,7 +140,7 @@ def search_attachment(query: str) -> list[dict]:
 @click.command()
 @click.option("--attachments", prompt="List of attachments", help="list of attachments.")
 @click.option("--dst", prompt="Path to save the attachment", help="The file path to save the attachment.")
-def save_attachment(attachments: list[dict], dst: str) -> list[dict]:
+def save_attachments(attachments: list[dict], dst: str) -> list[dict]:
     """
     Saves an attachment from an email.
 

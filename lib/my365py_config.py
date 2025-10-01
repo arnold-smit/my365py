@@ -22,12 +22,9 @@ CNF = {
     "TOKEN_MIN_SEC_TO_EXP": 5,
     "LOG_LEVEL": "INFO",
     "GRAPH_API_SCOPES": [
-        "Calendars.ReadWrite",
-        "Directory.ReadWrite.All",
-        "Files.ReadWrite.All",
-        "Tasks.ReadWrite.All",
-        "User-Mail.ReadWrite.All",
-        "User.ReadWrite.All"
+        "Files.Read.All",
+        "Mail.Read",
+        "Mail.Send",
         "User.Read"
     ]
 }

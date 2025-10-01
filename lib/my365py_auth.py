@@ -34,7 +34,7 @@ import asyncio
 import json
 import pickle
 from datetime import datetime, timedelta
-from msal import ConfidentialClientApplication
+from msal import PublicClientApplication
 from onepassword import Client
 from pathlib import Path
 
@@ -138,40 +138,38 @@ class M365Auth:
         Subsequently use these to authenticate with Azure and obtain a bearer token.
         """
         creds = get_azure_ids()
-        self._tenant_id = creds["tenant_id"]
-        self._application_id = creds["application_id"]
-        self._client_secret = creds["client_secret_value"]
+        self._client_id = creds["application_id"]
         self._user_object_id = creds["user_object_id"]
-        self._msal_authority = f"https://login.microsoftonline.com/{self._tenant_id}"
-        self._msal_scopes = ["https://graph.microsoft.com/.default"]
-        self._msal_app = ConfidentialClientApplication(
-            client_id = self._application_id,
-            client_credential = self._client_secret,
-            authority = self._msal_authority,
-        )
-        self._bearer_token: str = None
+        self._authority = f"https://login.microsoftonline.com/consumers" # in order for personal accounts to work -> do not use tenant_id
+        self._scopes = CNF["GRAPH_API_SCOPES"]
+        self._auth_token: str = None
         self._token_expiry: datetime.now()
+        self._app = PublicClientApplication( client_id=self._client_id, authority=self._authority, )
         self._refresh_token()
-        logger.success(f"Initialized M365BearerToken")
+        logger.success("Initialized M365Auth")
 
     def _refresh_token(self) -> None:
         """
         Make sure self.token_data contains a valid bearer token. 
         """
-        if (self._bearer_token is None) or ((self._token_expiry - datetime.now()).total_seconds() < CNF["TOKEN_MIN_SEC_TO_EXP"]):
-            result = self._msal_app.acquire_token_silent(scopes=self._msal_scopes, account=None)
-            if result:
-                logger.info(f"Using cached token: {result}")
+        if (self._auth_token is None) or ((self._token_expiry - datetime.now()).total_seconds() < CNF["TOKEN_MIN_SEC_TO_EXP"]):
+            # Step 1: Initiate the device flow
+            flow = self._app.initiate_device_flow(scopes=self._scopes)
+            if "user_code" not in flow:
+               msg = "Failed to create device flow. Check app registration."
+               raise OSError(msg)
+            print(flow["message"])  # This shows instructions with code and URL
+            print("Code expires in", flow["expires_in"], "seconds")
+            # Step 2: Poll until user signs in or code expires
+            result = self._app.acquire_token_by_device_flow(flow)
+            # Step 3: Check result
+            if "access_token" in result:
+                self._auth_token = result["access_token"]
+                self._token_expiry = datetime.now() + timedelta(seconds=result["expires_in"])
+                print("Access token acquired!")
             else:
-                result = self._msal_app.acquire_token_for_client(scopes=self._msal_scopes)
-                if "access_token" in result:
-                    self._bearer_token = result["access_token"]
-                    self._token_expiry = datetime.now() + timedelta(seconds=result["expires_in"])
-                    logger.success(f"Acquired new token which expires at {self._token_expiry}")
-                else:
-                    msg = f"Could not obtain access token: {result.get('error')}: {result.get('error_description')}"
-                    logger.error(msg)
-                    raise RuntimeError(msg)
+                msg = "Failed to acquire token"
+                raise OSError(msg)
 
     def get_user_object_id(self) -> str:
         """
@@ -194,6 +192,6 @@ class M365Auth:
             A dictionary that can be past as an authentication header to requests.
         """
         self._refresh_token()
-        return { "Authorization": f"Bearer {self._bearer_token}",
+        return { "Authorization": f"Bearer {self._auth_token}",
                  "Content-Type": "application/json"
                }
